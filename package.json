@@ -1,0 +1,31 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tailwind:build": "vite build",
+    "tailwind:watch": "vite --watch"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "axios": "^1.6.2",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "pinia": "^2.1.7",
+    "qrcode": "^1.5.4",
+    "sweetalert2": "^11.19.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.3",
+    "vite": "^6.3.2"
+  }
+}
