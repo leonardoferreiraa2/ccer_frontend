@@ -1,3 +1,4 @@
+<!-- C:\Temp\ccer\frontend\src\components\NavBar.vue -->
 <template>
   <div>
     <div v-if="errorMessage" class="fixed top-4 right-4 bg-red-500 text-white p-4 rounded shadow-lg z-50">
@@ -56,6 +57,18 @@
                   <p class="text-sm font-medium text-gray-800">{{ authStore.user.nome }}</p>
                   <p class="text-xs text-gray-500">{{ authStore.user.email }}</p>
                 </div>
+                
+                <!-- Reset Password Option -->
+                <button 
+                  @click.stop="openResetPasswordModal"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center space-x-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                  </svg>
+                  <span>Alterar Senha</span>
+                </button>
+                
                 <button 
                   @click="handleLogout" 
                   class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center space-x-2"
@@ -85,6 +98,12 @@
         </div>
       </div>
     </nav>
+    
+    <!-- Modal de Reset de Senha -->
+    <ResetPasswordModal 
+      v-if="showResetModal"
+      @close="closeResetModal"
+    />
   </div>
 </template>
 
@@ -92,6 +111,7 @@
 import { useAuthStore } from '../stores/authStore'
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import ResetPasswordModal from './ResetPassword.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -100,6 +120,7 @@ const loading = ref(false)
 const errorMessage = ref(null)
 const dropdownOpen = ref(false)
 const dropdownMenu = ref(null)
+const showResetModal = ref(false)
 
 const userInitials = computed(() => {
   if (!authStore.user?.nome) return '?'
@@ -111,6 +132,15 @@ const userInitials = computed(() => {
 
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value
+}
+
+const openResetPasswordModal = () => {
+  dropdownOpen.value = false
+  showResetModal.value = true
+}
+
+const closeResetModal = () => {
+  showResetModal.value = false
 }
 
 const handleClickOutside = (event) => {

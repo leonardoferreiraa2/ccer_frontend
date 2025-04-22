@@ -27,7 +27,7 @@
         <div class="rounded-md shadow-sm space-y-4">
           <div>
             <input 
-              v-model="form.username" 
+              v-model="form.email" 
               placeholder="Email" 
               required 
               type="email"
@@ -37,7 +37,7 @@
           </div>
           <div>
             <input 
-              v-model="form.password" 
+              v-model="form.senha" 
               type="password" 
               placeholder="Senha" 
               required 
@@ -86,9 +86,9 @@ const handleLogin = async () => {
   
   if (success) {
     try {
-      await router.push('/usuarios')
+      await router.push('/salas')
     } catch (error) {
-      window.location.href = '/usuarios'
+      window.location.href = '/salas'
     }
   }
 }

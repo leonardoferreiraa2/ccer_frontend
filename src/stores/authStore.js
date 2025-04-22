@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import axios from '../../config/axios'
-import { useRouter } from 'vue-router'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -19,18 +18,16 @@ export const useAuthStore = defineStore('auth', {
       this.lastLoginAttempt = new Date().toISOString()
       
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/login`,
+        const response = await axios.post('/auth/login',
           {
-            email: credentials.username,
-            senha: credentials.password
+            email: credentials.email,
+            senha: credentials.senha
           },
           {
             withCredentials: true,
             headers: {
               'Content-Type': 'application/json'
-            },
-            timeout: 10000
+            }
           }
         )
 
@@ -43,6 +40,9 @@ export const useAuthStore = defineStore('auth', {
         this.isAdmin = this.user?.perfil === 'Administrador'
         
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+        
+        // Retorna true para indicar sucesso
+        // O redirecionamento deve ser feito no componente que chama o login
         return true
         
       } catch (error) {
@@ -59,7 +59,11 @@ export const useAuthStore = defineStore('auth', {
       if (error.code === 'ECONNABORTED') {
         message = 'Tempo de conexão esgotado'
       } else if (!error.response) {
-        message = 'Servidor não disponível. Verifique sua conexão.'
+        if (error.message && error.message.includes('Network Error')) {
+          message = 'Servidor não disponível. Verifique sua conexão.'
+        } else {
+          message = error.message || 'Erro desconhecido'
+        }
       } else if (error.response.data?.code === 'CREDENCIAIS_INVALIDAS') {
         message = 'Email ou senha incorretos'
       } else if (error.response.data?.message) {
@@ -78,13 +82,11 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        // Garante que temos um token válido antes de tentar logout
         if (!this.token) {
-          throw new Error('Nenhum token disponível');
+          throw new Error('Nenhum token disponível')
         }
     
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/logout`, 
+        const response = await axios.post('/auth/logout', 
           {}, 
           {
             withCredentials: true,
@@ -93,23 +95,22 @@ export const useAuthStore = defineStore('auth', {
               'Content-Type': 'application/json'
             }
           }
-        );
+        )
     
-        this.resetAuthState();
-        return response.data;
+        this.resetAuthState()
+        return response.data
       } catch (error) {
-        // Mesmo se falhar no servidor, limpa o estado local
-        this.resetAuthState();
-        throw error;
+        this.resetAuthState()
+        throw error
       }
     },
     
     resetAuthState() {
-      this.user = null;
-      this.token = null;
-      this.isAdmin = false;
-      this.loginError = null;
-      delete axios.defaults.headers.common['Authorization'];
+      this.user = null
+      this.token = null
+      this.isAdmin = false
+      this.loginError = null
+      delete axios.defaults.headers.common['Authorization']
     }
   },
 

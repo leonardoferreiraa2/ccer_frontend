@@ -78,14 +78,14 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', 
-                user.tipo === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-cyan-100 text-cyan-800']">
-                {{ user.tipo === 'admin' ? 'Administrador' : 'Editor' }}
+                user.perfil === 'Administrador' ? 'bg-blue-100 text-blue-800' : 'bg-cyan-100 text-cyan-800']">
+                {{ user.perfil === 'Administrador' ? 'Administrador' : 'Editor' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', 
-                user.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
-                {{ user.ativo ? 'Ativo' : 'Inativo' }}
+                user.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
+                {{ user.status ? 'Ativo' : 'Inativo' }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -100,8 +100,8 @@
                 </svg>
               </button>
               <button @click="openStatusModal(user)" :class="['p-1 rounded transition-colors', 
-                user.ativo ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50']"
-                :title="user.ativo ? 'Desativar' : 'Ativar'">
+                user.status ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50']"
+                :title="user.status ? 'Desativar' : 'Ativar'">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                 </svg>
@@ -148,12 +148,12 @@
         <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
           <div class="flex space-x-2">
             <span :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', 
-              user.tipo === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-cyan-100 text-cyan-800']">
-              {{ user.tipo === 'admin' ? 'Admin' : 'Editor' }}
+              user.perfil === 'Administrador' ? 'bg-blue-100 text-blue-800' : 'bg-cyan-100 text-cyan-800']">
+              {{ user.perfil === 'Administrador' ? 'Administrador' : 'Editor' }}
             </span>
             <span :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', 
-              user.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
-              {{ user.ativo ? 'Ativo' : 'Inativo' }}
+              user.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
+              {{ user.status ? 'Ativo' : 'Inativo' }}
             </span>
           </div>
           <div class="flex space-x-1">
@@ -163,8 +163,8 @@
               </svg>
             </button>
             <button @click="openStatusModal(user)" :class="['p-1 rounded transition-colors', 
-              user.ativo ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50']"
-              :title="user.ativo ? 'Desativar' : 'Ativar'">
+              user.status ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50']"
+              :title="user.status ? 'Desativar' : 'Ativar'">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
               </svg>
@@ -199,8 +199,8 @@
         </button>
         <button 
           @click="currentPage++" 
-          :disabled="currentPage * perPage >= filteredUsers.length"
-          :class="['px-3 py-1 rounded border', currentPage * perPage >= filteredUsers.length ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50']"
+          :disabled="currentPage >= totalPages"
+          :class="['px-3 py-1 rounded border', currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50']"
         >
           Próxima
         </button>
@@ -279,12 +279,12 @@
                 Perfil
               </label>
               <select 
-                v-model="form.tipo" 
+                v-model="form.perfil" 
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="admin">Administrador</option>
-                <option value="editor">Editor</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Editor">Editor</option>
               </select>
             </div>
 
@@ -296,7 +296,7 @@
                 Status
               </label>
               <select 
-                v-model="form.ativo"
+                v-model="form.status"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option :value="true">Ativo</option>
@@ -449,9 +449,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+import axios from '../../config/axios'
 import Swal from 'sweetalert2'
 import Menu from '../components/Menu.vue'
 
@@ -492,35 +493,26 @@ const showError = (message) => {
   })
 }
 
-// Dados dos usuários
-const users = ref([
-  { id: 1, nome: 'João Silva', email: 'joao@empresa.com', tipo: 'admin', ativo: true },
-  { id: 2, nome: 'Maria Souza', email: 'maria@empresa.com', tipo: 'editor', ativo: true },
-  { id: 3, nome: 'Carlos Oliveira', email: 'carlos@empresa.com', tipo: 'editor', ativo: false },
-  { id: 4, nome: 'Ana Costa', email: 'ana@empresa.com', tipo: 'admin', ativo: true },
-  { id: 5, nome: 'Pedro Santos', email: 'pedro@empresa.com', tipo: 'editor', ativo: true },
-  ...Array.from({ length: 15 }, (_, i) => ({
-    id: i + 6,
-    nome: `Usuário ${i + 6}`,
-    email: `user${i + 6}@empresa.com`,
-    tipo: i % 3 === 0 ? 'admin' : 'editor',
-    ativo: i % 4 !== 0
-  }))
-])
-
-// Estados da UI
+// Estados da aplicação
+const users = ref([])
+const isLoadingUsers = ref(false)
 const showFormModal = ref(false)
 const showConfirmModal = ref(false)
 const isEditing = ref(false)
 const isLoading = ref(false)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const perPage = ref(10)
+const totalItems = ref(0)
 
 // Formulário
 const form = ref({
   id: null,
   nome: '',
   email: '',
-  tipo: 'editor',
-  ativo: true
+  perfil: 'Editor',
+  status: true,
+  senha: ''
 })
 
 // Confirmação
@@ -531,28 +523,27 @@ const currentAction = ref('')
 const currentUser = ref(null)
 
 // Filtro e busca
-const searchQuery = ref('')
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value
   const query = searchQuery.value.toLowerCase()
   return users.value.filter(user => 
     user.nome.toLowerCase().includes(query) ||
     user.email.toLowerCase().includes(query) ||
-    user.tipo.toLowerCase().includes(query) ||
-    (user.ativo ? 'ativo' : 'inativo').includes(query)
+    user.perfil.toLowerCase().includes(query) ||
+    (user.status ? 'ativo' : 'inativo').includes(query)
   )
 })
 
 // Paginação
-const currentPage = ref(1)
-const perPage = ref(10)
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * perPage.value
   const end = start + perPage.value
   return filteredUsers.value.slice(start, end)
 })
 
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / perPage.value))
+const totalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / perPage.value)
+})
 
 const visiblePages = computed(() => {
   const pages = []
@@ -570,19 +561,42 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// Resetar página quando filtrar ou mudar itens por página
-watch([searchQuery, perPage], () => {
+
+// Carregar usuários
+const loadUsers = async () => {
+  isLoadingUsers.value = true
+  try {
+    const response = await axios.get('/usuarios')
+    if (response.data.success) {
+      // Remove a normalização que estava convertendo para minúsculas
+      users.value = response.data.data.map(user => ({
+        ...user,
+        status: user.status === 'Ativo' || user.status === true
+      }))
+      totalItems.value = users.value.length
+    }
+  } catch (error) {
+    showError('Erro ao carregar usuários')
+    console.error("Erro ao carregar usuários:", error)
+  } finally {
+    isLoadingUsers.value = false
+  }
+}
+
+// Observadores
+watch(searchQuery, () => {
   currentPage.value = 1
 })
 
-// Funções de navegação
-const navigateToSalas = () => {
-  router.push('/salas')
-}
+// Inicialização
+onMounted(() => {
+  loadUsers()
+})
 
 // Funções de modal
 const openCreateModal = () => {
   resetForm()
+  form.value.senha = ''
   isEditing.value = false
   showFormModal.value = true
 }
@@ -592,8 +606,9 @@ const openEditModal = (user) => {
     id: user.id,
     nome: user.nome,
     email: user.email,
-    tipo: user.tipo,
-    ativo: user.ativo
+    perfil: user.perfil,
+    status: user.status,
+    senha: ''
   }
   isEditing.value = true
   showFormModal.value = true
@@ -609,25 +624,22 @@ const openDeleteModal = (user) => {
 }
 
 const openResetModal = (user) => {
-  // Adicione esta linha para limpar o campo de busca
-  searchQuery.value = ''
-  
   currentUser.value = user
   currentAction.value = 'reset'
   confirmTitle.value = 'Redefinir Senha'
-  confirmMessage.value = `Uma nova senha será enviada para o usuário ${user.nome}.`
+  confirmMessage.value = `Uma nova senha será gerada para o usuário ${user.nome} e enviada por e-mail.`
   confirmActionText.value = 'Confirmar'
   showConfirmModal.value = true
 }
 
 const openStatusModal = (user) => {
   currentUser.value = user
-  currentAction.value = user.ativo ? 'deactivate' : 'activate'
-  confirmTitle.value = user.ativo ? 'Desativar Usuário' : 'Ativar Usuário'
-  confirmMessage.value = user.ativo 
+  currentAction.value = user.status ? 'Inativo' : 'Ativo'
+  confirmTitle.value = user.status ? 'Desativar Usuário' : 'Ativar Usuário'
+  confirmMessage.value = user.status 
     ? `Deseja desativar o usuário ${user.nome}? Ele não poderá acessar o sistema até ser ativado novamente.` 
     : `Deseja ativar o usuário ${user.nome}? Ele terá acesso ao sistema novamente.`
-  confirmActionText.value = user.ativo ? 'Desativar' : 'Ativar'
+  confirmActionText.value = user.status ? 'Desativar' : 'Ativar'
   showConfirmModal.value = true
 }
 
@@ -647,37 +659,43 @@ const resetForm = () => {
     id: null,
     nome: '',
     email: '',
-    tipo: 'editor',
-    ativo: true
+    perfil: 'Editor',
+    status: true,
+    senha: ''
   }
 }
 
 // Funções de ação
 const submitForm = async () => {
   isLoading.value = true
-  
+  const dataToSend = { 
+    ...form.value,
+    status: form.value.status === true || form.value.status === 'Ativo' ? 'Ativo' : 'Inativo'
+  }
+
   try {
-    // Simulação de API
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
     if (isEditing.value) {
-      const index = users.value.findIndex(u => u.id === form.value.id)
-      if (index !== -1) {
-        users.value[index] = { ...form.value }
+      delete dataToSend.senha
+      const response = await axios.put(`/usuarios/${form.value.id}`, dataToSend)
+      if (response.data.success) {
+        showSuccess('Usuário atualizado com sucesso!')
+        loadUsers()
+        closeModal()
       }
-      showSuccess('Usuário atualizado com sucesso!')
     } else {
-      const newId = Math.max(...users.value.map(u => u.id)) + 1
-      users.value.unshift({
-        id: newId,
-        ...form.value
+      const response = await axios.post('/usuarios', {
+        ...dataToSend,
+        senha: ''
       })
-      showSuccess('Usuário cadastrado com sucesso! Senha enviada por e-mail.')
+      if (response.data.success) {
+        showSuccess('Usuário cadastrado com sucesso! A senha foi enviada por e-mail.')
+        loadUsers()
+        closeModal()
+      }
     }
-    
-    closeModal()
   } catch (error) {
-    showError('Erro ao salvar usuário')
+    const errorMsg = error.response?.data?.message || 'Erro ao salvar usuário'
+    showError(errorMsg)
     console.error("Erro ao salvar usuário:", error)
   } finally {
     isLoading.value = false
@@ -688,30 +706,32 @@ const executeAction = async () => {
   isLoading.value = true
   
   try {
-    // Simulação de API
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
     switch (currentAction.value) {
       case 'delete':
-        users.value = users.value.filter(u => u.id !== currentUser.value.id)
+        await axios.delete(`/usuarios/${currentUser.value.id}`)
         showSuccess('Usuário excluído com sucesso!')
+        loadUsers()
         break
+        
       case 'reset':
-        showSuccess(`Senha resetada para ${currentUser.value.nome}! Nova senha enviada por e-mail.`)
+        const senha = ''
+        await axios.put(`/usuarios/${currentUser.value.id}`, { senha })
+        showSuccess(`Senha resetada para ${currentUser.value.nome}! A nova senha foi enviada por e-mail.`)
         break
-      case 'activate':
-      case 'deactivate':
-        const user = users.value.find(u => u.id === currentUser.value.id)
-        if (user) {
-          user.ativo = currentAction.value === 'activate'
-        }
-        showSuccess(`Usuário ${currentAction.value === 'activate' ? 'ativado' : 'desativado'} com sucesso!`)
+        
+      case 'Ativo':
+      case 'Inativo':
+        const status = currentAction.value === 'Ativo' ? 'Ativo' : 'Inativo'
+        await axios.put(`/usuarios/${currentUser.value.id}`, { status })
+        showSuccess(`Usuário ${currentAction.value === 'Ativo' ? 'reativado' : 'desativado'} com sucesso!`)
+        loadUsers()
         break
     }
     
     closeConfirmModal()
   } catch (error) {
-    showError('Erro ao processar ação')
+    const errorMsg = error.response?.data?.message || 'Erro ao processar ação'
+    showError(errorMsg)
     console.error("Erro ao processar ação:", error)
   } finally {
     isLoading.value = false
