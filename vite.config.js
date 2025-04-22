@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => {
           autoprefixer()
         ]
       }
+    },
+    build: {
+      outDir: 'dist',
+      assetsInlineLimit: 4096
     }
   };
 });

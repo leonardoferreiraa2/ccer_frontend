@@ -1,4 +1,3 @@
-// C:\Temp\ccer\frontend\src\router\index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
@@ -9,8 +8,7 @@ const routes = [
   },
   { 
     path: '/login', 
-    component: () => import('../views/LoginView.vue'),
-    meta: { requiresGuest: true }
+    component: () => import('../views/LoginView.vue') 
   },
   { 
     path: '/salas', 
@@ -20,14 +18,15 @@ const routes = [
   { 
     path: '/usuarios', 
     component: () => import('../views/UsuariosView.vue'),
-    meta: { 
-      requiresAuth: true,
-      requiresAdmin: true 
-    }
+    meta: { requiresAuth: true }
   },
   {
     path: '/sala/:id',
     component: () => import('../views/SalaPublica.vue')
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/salas'
   }
 ]
 
@@ -41,10 +40,6 @@ router.beforeEach(async (to, from, next) => {
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
-  } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next('/salas')
-  } else if (to.meta.requiresAdmin && (!authStore.isAuthenticated || !authStore.isAdmin)) {
-    next('/salas')
   } else {
     next()
   }
