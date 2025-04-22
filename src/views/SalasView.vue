@@ -610,15 +610,24 @@ const handleImageError = (event) => {
 // Manipulação de arquivos
 const handleFileUpload = (e) => {
   const file = e.target.files[0]
+  const maxSize = 2 * 1024 * 1024 // 5MB
+
   if (file) {
+    if (file.size > maxSize) {
+      showError('O tamanho da imagem não pode exceder 2MB.')
+      e.target.value = '' // limpa o campo
+      return
+    }
+
     form.value.foto = file
+
     const reader = new FileReader()
     reader.onload = (event) => {
       form.value.fotoPreview = event.target.result
     }
     reader.readAsDataURL(file)
   }
-}
+} //
 
 // Funções de ação
 const submitForm = async () => {
