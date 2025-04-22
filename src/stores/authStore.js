@@ -3,9 +3,9 @@ import axios from '../../config/axios'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
-    token: null,
-    isAdmin: false,
+    user: JSON.parse(localStorage.getItem('user')) || null,
+    token: localStorage.getItem('token') || null,
+    isAdmin: localStorage.getItem('isAdmin') === 'true' || false,
     loginError: null,
     isLoading: false,
     lastLoginAttempt: null
@@ -35,14 +35,7 @@ export const useAuthStore = defineStore('auth', {
           throw new Error(response.data.message || 'Login falhou')
         }
 
-        this.user = response.data.usuario
-        this.token = response.data.token
-        this.isAdmin = this.user?.perfil === 'Administrador'
-        
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
-        
-        // Retorna true para indicar sucesso
-        // O redirecionamento deve ser feito no componente que chama o login
+        this.setAuthData(response.data.usuario, response.data.token)
         return true
         
       } catch (error) {
@@ -51,6 +44,20 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.isLoading = false
       }
+    },
+
+    setAuthData(user, token) {
+      this.user = user
+      this.token = token
+      this.isAdmin = user?.perfil === 'Administrador'
+      
+      // Armazena no localStorage
+      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('token', token)
+      localStorage.setItem('isAdmin', this.isAdmin)
+      
+      // Configura o header Authorization
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     },
 
     setLoginError(error) {
@@ -82,26 +89,22 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        if (!this.token) {
-          throw new Error('Nenhum token disponível')
-        }
-    
-        const response = await axios.post('/auth/logout', 
-          {}, 
-          {
-            withCredentials: true,
-            headers: {
-              'Authorization': `Bearer ${this.token}`,
-              'Content-Type': 'application/json'
+        if (this.token) {
+          await axios.post('/auth/logout', 
+            {}, 
+            {
+              withCredentials: true,
+              headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json'
+              }
             }
-          }
-        )
-    
-        this.resetAuthState()
-        return response.data
+          )
+        }
       } catch (error) {
+        console.error('Erro durante logout:', error)
+      } finally {
         this.resetAuthState()
-        throw error
       }
     },
     
@@ -111,15 +114,24 @@ export const useAuthStore = defineStore('auth', {
       this.isAdmin = false
       this.loginError = null
       delete axios.defaults.headers.common['Authorization']
+      
+      // Remove do localStorage
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+      localStorage.removeItem('isAdmin')
+    },
+
+    initialize() {
+      if (this.token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+      }
     }
   },
 
   getters: {
-    isAuthenticated: (state) => !!state.user,
+    isAuthenticated: (state) => !!state.token,
     shouldShowLoginError: (state) => {
       return state.loginError && state.loginError.timestamp === state.lastLoginAttempt
     }
-  },
-
-  persist: true
+  }
 })

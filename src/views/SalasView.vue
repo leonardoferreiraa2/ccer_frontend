@@ -10,7 +10,7 @@
       </div>
       <div class="flex items-center gap-3">
         <button 
-          @click="showModal = true" 
+          @click="openCreateModal" 
           class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -48,16 +48,67 @@
     </div>
 
     <!-- Listagem de Salas -->
-    <div v-if="salas.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <SalaCard 
-        v-for="sala in filteredSalas" 
+    <div v-if="filteredSalas.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div 
+        v-for="sala in paginatedSalas" 
         :key="sala.id" 
-        :sala="sala"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @download="handleDownload"
-        @preview="previewSalaImage"
-      />
+        class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+      >
+        <div class="relative">
+          <img 
+            :src="getImageUrl(sala.foto)" 
+            :alt="sala.titulo"
+            class="w-full h-48 object-cover"
+            @error="handleImageError"
+            crossorigin="anonymous"
+          >
+          <div class="absolute top-2 right-2 flex space-x-1">
+            <button 
+              @click="openEditModal(sala)"
+              class="p-1.5 bg-white rounded-full shadow hover:bg-gray-100 transition-colors"
+              title="Editar"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+            <button 
+              @click="openDeleteModal(sala)"
+              class="p-1.5 bg-white rounded-full shadow hover:bg-gray-100 transition-colors"
+              title="Excluir"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ sala.titulo }}</h3>
+          <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ sala.descricao }}</p>
+          <div class="flex justify-between items-center">
+            <button 
+              @click="previewSalaImage(sala)"
+              class="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Visualizar
+            </button>
+            <button 
+              @click="handleDownload(sala)"
+              class="text-sm text-green-600 hover:text-green-800 flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              Baixar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- Estado Vazio -->
@@ -66,10 +117,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
-        <h3 class="mt-4 text-lg font-medium text-gray-900">Nenhuma sala cadastrada</h3>
-        <p class="mt-1 text-gray-600">Comece adicionando sua primeira sala de eventos</p>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">Nenhuma sala encontrada</h3>
+        <p class="mt-1 text-gray-600">{{ searchQuery ? 'Nenhum resultado para sua busca' : 'Comece adicionando sua primeira sala de eventos' }}</p>
         <button 
-          @click="showModal = true" 
+          v-if="!searchQuery"
+          @click="openCreateModal" 
           class="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -81,7 +133,7 @@
     </div>
 
     <!-- Paginação -->
-    <div v-if="salas.length" class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div v-if="filteredSalas.length" class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="text-sm text-gray-700">
         Mostrando <span class="font-medium">{{ (currentPage - 1) * perPage + 1 }}</span> a 
         <span class="font-medium">{{ Math.min(currentPage * perPage, filteredSalas.length) }}</span> de 
@@ -105,8 +157,8 @@
         </button>
         <button 
           @click="currentPage++" 
-          :disabled="currentPage * perPage >= filteredSalas.length"
-          :class="['px-3 py-1 rounded border', currentPage * perPage >= filteredSalas.length ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50']"
+          :disabled="currentPage >= totalPages"
+          :class="['px-3 py-1 rounded border', currentPage >= totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50']"
         >
           Próxima
         </button>
@@ -126,51 +178,15 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 max-w-sm w-full text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p class="text-gray-700">Gerando imagem...</p>
-      </div>
-    </div>
-
-    <!-- Modal de Pré-visualização -->
-    <div v-if="showPreview" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div class="flex justify-between items-center border-b border-gray-200 p-5">
-          <h2 class="text-xl font-semibold text-gray-800">Pré-visualização</h2>
-          <button @click="showPreview = false" class="text-gray-400 hover:text-gray-500 p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-5">
-          <img :src="previewImage" alt="Pré-visualização da sala" class="w-full h-auto rounded-lg">
-          <div class="mt-4 flex justify-center">
-            <button 
-              @click="downloadImage(previewImage, `sala-${salaDetail?.titulo?.toLowerCase().replace(/\s+/g, '-') || 'sala'}.jpg`)"  
-              class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-              <span>Baixar Imagem</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Edição/Criação -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <!-- Modal de Cadastro/Edição -->
+    <div v-if="showFormModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div class="flex justify-between items-center border-b border-gray-200 p-5">
           <h2 class="text-xl font-semibold text-gray-800 flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
             </svg>
-            <span>{{ form.id ? 'Editar Sala' : 'Nova Sala' }}</span>
+            <span>{{ isEditing ? 'Editar Sala' : 'Nova Sala' }}</span>
           </h2>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-500 p-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -277,7 +293,7 @@
                 >
                   <path d="M7.707 10.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
                 </svg>
-                {{ isLoading ? (form.id ? 'Salvando...' : 'Cadastrando...') : (form.id ? 'Salvar' : 'Cadastrar') }}
+                {{ isLoading ? (isEditing ? 'Salvando...' : 'Cadastrando...') : (isEditing ? 'Salvar' : 'Cadastrar') }}
               </button>
             </div>
           </form>
@@ -285,84 +301,34 @@
       </div>
     </div>
 
-    <!-- Modal de Detalhes -->
-    <div v-if="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl">
-        <div class="flex justify-between items-center border-b border-gray-200 p-5">
-          <h2 class="text-xl font-semibold text-gray-800">{{ salaDetail?.titulo }}</h2>
-          <button @click="showDetailModal = false" class="text-gray-400 hover:text-gray-500 p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <img 
-                :src="salaDetail?.foto ? `/src/assets/${salaDetail.foto}` : 'https://via.placeholder.com/500x300?text=CCER'" 
-                :alt="salaDetail?.titulo"
-                class="w-full h-auto rounded-lg"
-              >
-            </div>
-            <div class="space-y-4">
-              <div>
-                <h3 class="text-lg font-medium text-gray-900">Descrição</h3>
-                <p class="mt-1 text-gray-600">{{ salaDetail?.descricao }}</p>
-              </div>
-              
-              <div class="grid grid-cols-1 gap-4">
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900">URL da Sala</h3>
-                  <p class="mt-1">
-                    <a :href="getSalaUrl(salaDetail?.id)" target="_blank" class="text-blue-600 hover:text-blue-800 break-all">
-                      {{ getSalaUrl(salaDetail?.id) }}
-                    </a>
-                  </p>
-                </div>
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900">Última Atualização</h3>
-                  <p class="mt-1 text-gray-600">{{ salaDetail?.data_atualizacao }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="border-t border-gray-200 px-5 py-4 flex justify-end space-x-3">
-          <button 
-            @click="handleEdit(salaDetail)"
-            class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-            </svg>
-            <span>Editar Sala</span>
-          </button>
-          <button 
-            @click="previewSalaImage(salaDetail)"
-            class="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span>Pré-visualizar</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Confirmação de Exclusão -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <!-- Modal de Confirmação -->
+    <div v-if="showConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div class="flex justify-between items-center border-b border-gray-200 p-5">
           <h2 class="text-xl font-semibold text-gray-800 flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              class="h-5 w-5" 
+              :class="currentAction === 'delete' ? 'text-red-500' : 'text-blue-500'" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path 
+                v-if="currentAction === 'delete'"
+                fill-rule="evenodd" 
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" 
+                clip-rule="evenodd" 
+              />
+              <path 
+                v-else
+                fill-rule="evenodd" 
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" 
+                clip-rule="evenodd" 
+              />
             </svg>
-            <span>Confirmar Exclusão</span>
+            <span>{{ confirmTitle }}</span>
           </h2>
-          <button @click="showDeleteModal = false" class="text-gray-400 hover:text-gray-500 p-1">
+          <button @click="closeConfirmModal" class="text-gray-400 hover:text-gray-500 p-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -373,11 +339,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-2 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
-            Tem certeza que deseja excluir permanentemente a sala "{{ salaToDelete?.titulo }}"? Esta ação não pode ser desfeita!
+            {{ confirmMessage }}
           </p>
           <div class="flex justify-end space-x-3 pt-4">
             <button 
-              @click="showDeleteModal = false" 
+              @click="closeConfirmModal" 
               class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -386,9 +352,10 @@
               Cancelar
             </button>
             <button 
-              @click="confirmDelete" 
+              @click="executeAction" 
               :disabled="isLoading"
-              class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70 flex items-center"
+              :class="['px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center',
+                currentAction === 'delete' ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500']"
             >
               <svg 
                 v-if="isLoading"
@@ -407,65 +374,94 @@
                 viewBox="0 0 20 20" 
                 fill="currentColor"
               >
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                <path 
+                  v-if="currentAction === 'delete'"
+                  fill-rule="evenodd" 
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" 
+                  clip-rule="evenodd" 
+                />
+                <path 
+                  v-else-if="currentAction === 'reset'"
+                  fill-rule="evenodd" 
+                  d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" 
+                  clip-rule="evenodd" 
+                />
+                <path 
+                  v-else
+                  fill-rule="evenodd" 
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                  clip-rule="evenodd" 
+                />
               </svg>
-              {{ isLoading ? 'Excluindo...' : 'Confirmar Exclusão' }}
+              {{ isLoading ? 'Processando...' : confirmActionText }}
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal de Pré-visualização -->
+    <div v-if="showPreview" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div class="flex justify-between items-center border-b border-gray-200 p-5">
+          <h2 class="text-xl font-semibold text-gray-800">Pré-visualização</h2>
+          <button @click="showPreview = false" class="text-gray-400 hover:text-gray-500 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-5">
+          <img :src="previewImage" alt="Pré-visualização da sala" class="w-full h-auto rounded-lg">
+          <div class="mt-4 flex justify-center">
+            <button 
+              @click="downloadImage(previewImage, `sala-${salaDetail?.titulo?.toLowerCase().replace(/\s+/g, '-') || 'sala'}.jpg`)"  
+              class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              <span>Baixar Imagem</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 max-w-sm w-full text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p class="text-gray-700">{{ loadingMessage }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import axios from 'axios'
-import SalaCard from '../components/SalaCard.vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAlert } from '../composables/useAlert'
+import axios from '../../config/axios'
 import QRCode from 'qrcode'
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
-import { useRouter } from 'vue-router'
-import { useAlert } from '../composables/useAlert'
 import Menu from '../components/Menu.vue'
 
 const router = useRouter()
 const { showSuccess, showError } = useAlert()
 
-// Dados das salas
-const salas = ref([
-  {
-    id: 1,
-    titulo: 'Sala de Música',
-    descricao: 'Sala completa com piano de cauda, bateria e equipamento de som profissional',
-    foto: 'sala-musica.jpg',
-    data_atualizacao: '15/01/2024'
-  },
-  {
-    id: 2,
-    titulo: 'Sala de Dança',
-    descricao: 'Espaço amplo com piso especializado, espelhos e barras',
-    foto: 'sala-danca.jpg',
-    data_atualizacao: '10/01/2024'
-  },
-  {
-    id: 3,
-    titulo: 'Sala de Teatro',
-    descricao: 'Palco profissional com iluminação cênica e cortinas',
-    foto: 'sala-teatro.jpg',
-    data_atualizacao: '05/01/2024'
-  }
-])
-
-// Estados da UI
-const showModal = ref(false)
-const showDeleteModal = ref(false)
-const showDetailModal = ref(false)
-const showPreview = ref(false)
+// Estados da aplicação
+const salas = ref([])
 const isLoading = ref(false)
-const salaToDelete = ref(null)
-const salaDetail = ref(null)
-const previewImage = ref('')
+const showFormModal = ref(false)
+const showConfirmModal = ref(false)
+const showPreview = ref(false)
+const isEditing = ref(false)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const perPage = ref(10)
+const loadingMessage = ref('Carregando...')
 
 // Formulário
 const form = ref({
@@ -476,27 +472,36 @@ const form = ref({
   fotoPreview: null
 })
 
+// Confirmação
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmActionText = ref('')
+const currentAction = ref('')
+const currentSala = ref(null)
+
+// Pré-visualização
+const previewImage = ref('')
+const salaDetail = ref(null)
+
 // Filtro e busca
-const searchQuery = ref('')
 const filteredSalas = computed(() => {
   if (!searchQuery.value) return salas.value
   const query = searchQuery.value.toLowerCase()
   return salas.value.filter(sala => 
     sala.titulo.toLowerCase().includes(query) ||
-    sala.descricao.toLowerCase().includes(query)
-  )
+    sala.descricao.toLowerCase().includes(query))
 })
 
 // Paginação
-const currentPage = ref(1)
-const perPage = ref(10)
 const paginatedSalas = computed(() => {
   const start = (currentPage.value - 1) * perPage.value
   const end = start + perPage.value
   return filteredSalas.value.slice(start, end)
 })
 
-const totalPages = computed(() => Math.ceil(filteredSalas.value.length / perPage.value))
+const totalPages = computed(() => {
+  return Math.ceil(filteredSalas.value.length / perPage.value)
+})
 
 const visiblePages = computed(() => {
   const pages = []
@@ -514,14 +519,92 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// Resetar página quando filtrar ou mudar itens por página
-watch([searchQuery, perPage], () => {
+// Carregar salas
+const loadSalas = async () => {
+  isLoading.value = true
+  try {
+    const response = await axios.get('/salas')
+    if (response.data.success) {
+      salas.value = response.data.data
+    }
+  } catch (error) {
+    showError('Erro ao carregar salas')
+    console.error("Erro ao carregar salas:", error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Observadores
+watch(searchQuery, () => {
   currentPage.value = 1
 })
 
-// Função para gerar URL da sala
-const getSalaUrl = (id) => {
-  return `http://localhost:5173/sala/${id}`
+// Inicialização
+onMounted(() => {
+  loadSalas()
+})
+
+// Funções de modal
+const openCreateModal = () => {
+  resetForm()
+  isEditing.value = false
+  showFormModal.value = true
+}
+
+const openEditModal = (sala) => {
+  form.value = {
+    id: sala.id,
+    titulo: sala.titulo,
+    descricao: sala.descricao,
+    foto: null,
+    fotoPreview: sala.foto ? `/uploads/${sala.foto}` : null
+  }
+  isEditing.value = true
+  showFormModal.value = true
+}
+
+const openDeleteModal = (sala) => {
+  currentSala.value = sala
+  currentAction.value = 'delete'
+  confirmTitle.value = 'Confirmar Exclusão'
+  confirmMessage.value = `Tem certeza que deseja excluir a sala "${sala.titulo}"? Esta ação não pode ser desfeita.`
+  confirmActionText.value = 'Excluir'
+  showConfirmModal.value = true
+}
+
+const closeModal = () => {
+  showFormModal.value = false
+  resetForm()
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  currentSala.value = null
+  currentAction.value = ''
+}
+
+const resetForm = () => {
+  form.value = {
+    id: null,
+    titulo: '',
+    descricao: '',
+    foto: null,
+    fotoPreview: null
+  }
+}
+
+const placeholderImage = 'https://via.placeholder.com/500x300?text=CCER'
+
+const getImageUrl = (foto) => {
+  if (!foto) return placeholderImage;
+  return `${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/${foto}?t=${Date.now()}`;
+};
+
+const handleImageError = (event) => {
+  console.error('Erro ao carregar imagem:', event.target.src);
+  event.target.src = placeholderImage;
+  event.target.onerror = null; // Previne loop de erro
 }
 
 // Manipulação de arquivos
@@ -537,84 +620,69 @@ const handleFileUpload = (e) => {
   }
 }
 
-// Operações CRUD
-const handleEdit = (sala) => {
-  form.value = { 
-    ...sala,
-    fotoPreview: sala.foto ? `/src/assets/${sala.foto}` : null
-  }
-  showModal.value = true
-}
-
-const handleDelete = (id) => {
-  salaToDelete.value = salas.value.find(sala => sala.id === id)
-  showDeleteModal.value = true
-}
-
-const showDetails = (sala) => {
-  salaDetail.value = sala
-  showDetailModal.value = true
-}
-
-const confirmDelete = async () => {
-  isLoading.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    salas.value = salas.value.filter(sala => sala.id !== salaToDelete.value.id)
-    showDeleteModal.value = false
-    salaToDelete.value = null
-    showSuccess('Sala excluída com sucesso!')
-  } catch (error) {
-    showError('Erro ao excluir sala')
-    console.error("Erro ao excluir sala:", error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
+// Funções de ação
 const submitForm = async () => {
   isLoading.value = true
   
   try {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    if (form.value.id) {
-      const index = salas.value.findIndex(s => s.id === form.value.id)
-      salas.value[index] = { 
-        ...form.value,
-        foto: form.value.foto?.name || form.value.foto,
-        data_atualizacao: new Date().toLocaleDateString('pt-BR')
-      }
-      showSuccess('Sala atualizada com sucesso!')
-    } else {
-      const novaSala = {
-        ...form.value,
-        id: Math.max(...salas.value.map(s => s.id)) + 1,
-        data_atualizacao: new Date().toLocaleDateString('pt-BR'),
-        foto: form.value.foto?.name || 'default.jpg'
-      }
-      salas.value.unshift(novaSala)
-      showSuccess('Sala cadastrada com sucesso!')
+    const formData = new FormData()
+    formData.append('titulo', form.value.titulo)
+    formData.append('descricao', form.value.descricao)
+    if (form.value.foto) {
+      formData.append('foto', form.value.foto)
     }
-    
-    closeModal()
+
+    if (isEditing.value) {
+      const response = await axios.put(`/salas/${form.value.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      if (response.data.success) {
+        showSuccess('Sala atualizada com sucesso!')
+        loadSalas()
+        closeModal()
+      }
+    } else {
+      const response = await axios.post('/salas', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      if (response.data.success) {
+        showSuccess('Sala cadastrada com sucesso!')
+        loadSalas()
+        closeModal()
+      }
+    }
   } catch (error) {
-    showError('Erro ao salvar sala')
+    const errorMsg = error.response?.data?.message || 'Erro ao salvar sala'
+    showError(errorMsg)
     console.error("Erro ao salvar sala:", error)
   } finally {
     isLoading.value = false
   }
 }
 
-const closeModal = () => {
-  showModal.value = false
-  showDetailModal.value = false
-  form.value = { 
-    id: null, 
-    titulo: '', 
-    descricao: '', 
-    foto: null,
-    fotoPreview: null
+const executeAction = async () => {
+  isLoading.value = true
+  
+  try {
+    switch (currentAction.value) {
+      case 'delete':
+        await axios.delete(`/salas/${currentSala.value.id}`)
+        showSuccess('Sala excluída com sucesso!')
+        loadSalas()
+        break
+    }
+    
+    closeConfirmModal()
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Erro ao processar ação'
+    showError(errorMsg)
+    console.error("Erro ao processar ação:", error)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -675,6 +743,7 @@ const addTextElements = (ctx, sala, dimensions) => {
 
 const generateSalaImage = async (sala, triggerDownload = true) => {
   isLoading.value = true
+  loadingMessage.value = 'Gerando imagem...'
   try {
     // 1. Carregar template
     const templateImg = await loadImage('/modelo_qr.png')
@@ -733,7 +802,6 @@ const downloadImage = (dataUrl, filename) => {
   document.body.removeChild(link)
 }
 
-// Novas funcionalidades
 const previewSalaImage = async (sala) => {
   salaDetail.value = sala
   const dataUrl = await generateSalaImage(sala, false)
@@ -743,6 +811,7 @@ const previewSalaImage = async (sala) => {
 
 const generateAllCards = async () => {
   isLoading.value = true
+  loadingMessage.value = 'Gerando todas as imagens...'
   try {
     const zip = new JSZip()
     
@@ -768,7 +837,7 @@ const handleDownload = (sala) => {
   generateSalaImage(sala)
 }
 
-const navigateToUsuarios = () => {
-  router.push('/usuarios')
+const getSalaUrl = (id) => {
+  return `${window.location.origin}/sala/${id}`
 }
 </script>

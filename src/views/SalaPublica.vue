@@ -11,9 +11,11 @@
         <!-- Foto da sala (acima de tudo) -->
         <div class="w-full h-64 md:h-80 overflow-hidden">
           <img 
-            :src="imageUrl" 
-            :alt="'Foto da ' + title" 
+            :src="getImageUrl(sala.foto)" 
+            :alt="sala.titulo"
             class="w-full h-full object-cover"
+            @error="handleImageError"
+            crossorigin="anonymous"
             v-if="!loading"
           >
           <div v-else class="w-full h-full bg-gray-200 animate-pulse"></div>
@@ -29,18 +31,18 @@
 
           <!-- Conteúdo carregado -->
           <div v-else>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{{ title }}</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{{ sala.titulo }}</h1>
             
             <div class="bg-blue-50 p-4 rounded-lg mb-6">
-              <p class="text-gray-700">{{ description }}</p>
+              <p class="text-gray-700">{{ sala.descricao }}</p>
             </div>
 
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <span class="text-sm text-gray-500">
-                Atualizado em: {{ salas.find(s => s.titulo === title)?.data_atualizacao || 'N/A' }}
+                Atualizado em: {{ formatDate(sala.updated_at) || 'N/A' }}
               </span>
               
-              <button @click="speakText(description)" 
+              <button @click="speakText(sala.descricao)" 
                 class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828a1 1 0 010-1.415z" clip-rule="evenodd" />
@@ -96,65 +98,105 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import axios from '../../config/axios'
 
 const route = useRoute()
-const title = ref('')
-const description = ref('')
-const imageUrl = ref('')
+const sala = ref({
+  titulo: '',
+  descricao: '',
+  foto: null,
+  updatedAt: null
+})
 const loading = ref(true)
 const currentYear = ref(new Date().getFullYear())
 
-const salas = ref([
-  {
-    id: 1,
-    titulo: 'Sala de Música',
-    descricao: 'Sala completa com piano de cauda, bateria e equipamento de som profissional',
-    foto: 'sala-musica.jpg',
-    data_atualizacao: '15/01/2024'
-  },
-  {
-    id: 2,
-    titulo: 'Sala de Dança',
-    descricao: 'Espaço amplo com piso especializado, espelhos e barras',
-    foto: 'sala-danca.jpg',
-    data_atualizacao: '10/01/2024'
-  },
-  {
-    id: 3,
-    titulo: 'Sala de Teatro',
-    descricao: 'Palco profissional com iluminação cênica e cortinas',
-    foto: 'sala-teatro.jpg',
-    data_atualizacao: '05/01/2024'
+const fetchSala = async (id) => {
+  try {
+    loading.value = true
+    const response = await axios.get(`/salas/${id}`)
+    
+    if (response.data.success) {
+      sala.value = response.data.data
+    } else {
+      console.error('Sala não encontrada')
+    }
+  } catch (error) {
+    console.error('Erro ao buscar sala:', error)
+  } finally {
+    loading.value = false
   }
-])
+}
 
-const fetchData = (id) => {
-  const sala = salas.value.find(s => s.id === Number(id))
-  if (sala) {
-    title.value = sala.titulo
-    description.value = sala.descricao
-    imageUrl.value = `/src/assets/${sala.foto}`
-    speakText(sala.descricao)
-  } else {
-    title.value = 'Sala não encontrada'
-    description.value = ''
-    imageUrl.value = '/logo_ccer.avif'
+// Adicionando um watcher para detectar quando a sala é carregada
+watch(() => sala.value.descricao, (newDesc) => {
+  if (newDesc) {
+    // Usar setTimeout para garantir que a fala ocorra após a renderização
+    setTimeout(() => {
+      speakText(newDesc)
+    }, 500)
   }
-  loading.value = false
+})
+
+const placeholderImage = 'https://via.placeholder.com/500x300?text=CCER'
+
+const getImageUrl = (foto) => {
+  if (!foto) return placeholderImage;
+  return `${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/${foto}?t=${Date.now()}`;
+};
+
+const handleImageError = (event) => {
+  console.error('Erro ao carregar imagem:', event.target.src);
+  event.target.src = placeholderImage;
+  event.target.onerror = null; // Previne loop de erro
 }
 
 const speakText = (text) => {
+  // Verificar se a API de síntese de fala está disponível
+  if (!('speechSynthesis' in window)) {
+    console.warn('Seu navegador não suporta a API de síntese de fala')
+    return
+  }
+  
   const synth = window.speechSynthesis
+  // Cancelar qualquer fala em andamento
+  synth.cancel()
+  
   if (synth && text) {
     const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'pt-BR'
+    // Configurar voz (opcional)
+    const voices = synth.getVoices()
+    const portugueseVoice = voices.find(voice => 
+      voice.lang.includes('pt') || voice.lang.includes('PT')
+    )
+    if (portugueseVoice) {
+      utterance.voice = portugueseVoice
+    }
     synth.speak(utterance)
   }
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const options = { day: '2-digit', month: '2-digit', year: 'numeric' }
+  return new Date(dateString).toLocaleDateString('pt-BR', options)
+}
+
 onMounted(() => {
   const salaId = route.params.id
-  fetchData(salaId)
+  if (salaId) {
+    fetchSala(salaId)
+  } else {
+    loading.value = false
+  }
+  
+  // Alguns navegadores precisam que as vozes sejam carregadas
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      // Vozes carregadas
+    }
+  }
 })
 </script>

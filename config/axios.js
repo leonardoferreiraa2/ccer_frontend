@@ -7,6 +7,7 @@ const api = axios.create({
   timeout: 10000
 })
 
+// Interceptor de requisição
 api.interceptors.request.use(config => {
   const authStore = useAuthStore()
   if (authStore.token) {
@@ -17,15 +18,12 @@ api.interceptors.request.use(config => {
   return Promise.reject(error)
 })
 
+// Interceptor de resposta
 api.interceptors.response.use(response => {
   return response
-}, async error => {
-  if (error.response?.status === 401) {
-    const authStore = useAuthStore()
-    if (authStore.isAuthenticated) {
-      await authStore.logout()
-    }
-  }
+}, error => {
+  // Você pode adicionar tratamento específico para diferentes códigos de erro aqui
+  // Mas removemos o logout automático para 401
   return Promise.reject(error)
 })
 
