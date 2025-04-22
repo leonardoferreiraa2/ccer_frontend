@@ -552,17 +552,34 @@ const openCreateModal = () => {
   showFormModal.value = true
 }
 
-const openEditModal = (sala) => {
+const openEditModal = async (sala) => {
   form.value = {
     id: sala.id,
     titulo: sala.titulo,
     descricao: sala.descricao,
     foto: null,
-    fotoPreview: sala.foto ? `/uploads/${sala.foto}` : null
+    fotoPreview: null
+  };
+  
+  isEditing.value = true;
+  showFormModal.value = true;
+
+  // Carrega a imagem via fetch para garantir que está acessível
+  if (sala.foto) {
+    try {
+      const response = await fetch(getImageUrl(sala.foto));
+      if (response.ok) {
+        const blob = await response.blob();
+        form.value.fotoPreview = URL.createObjectURL(blob);
+      } else {
+        form.value.fotoPreview = placeholderImage;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar imagem:', error);
+      form.value.fotoPreview = placeholderImage;
+    }
   }
-  isEditing.value = true
-  showFormModal.value = true
-}
+};
 
 const openDeleteModal = (sala) => {
   currentSala.value = sala
